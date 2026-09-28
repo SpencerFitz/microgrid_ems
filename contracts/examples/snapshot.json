@@ -1,0 +1,36 @@
+{
+  "id": "snapshot-demo-001",
+  "siteId": "site01",
+  "cycle": 1,
+  "coreEpoch": "core-demo-001",
+  "timestamp": "2026-09-28T00:00:01Z",
+  "cutoffTime": "2026-09-28T00:00:01Z",
+  "configVersion": "python-windows-v1",
+  "operatingMode": "GRID_CONNECTED",
+  "tags": {
+    "site01.ess01.soc": {
+      "value": 60,
+      "unit": "%",
+      "sampleTimestamp": "2026-09-28T00:00:00Z",
+      "receivedAt": "2026-09-28T00:00:00.040Z",
+      "effectiveQuality": "GOOD",
+      "qualityTimestamp": "2026-09-28T00:00:00Z",
+      "ageMs": 1000,
+      "sampleId": "sample-demo-001",
+      "source": "SIMULATOR"
+    }
+  },
+  "grid": {},
+  "load": {},
+  "pv": {},
+  "ess": {
+    "soc": "site01.ess01.soc"
+  },
+  "ev": {},
+  "completeness": "INCOMPLETE",
+  "controlEligible": false,
+  "missingTagIds": [
+    "site01.pcc01.active_power"
+  ],
+  "invalidTagIds": []
+}

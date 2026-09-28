@@ -91,3 +91,7 @@ microgrid_ems/
 本次M01使用标准库，不依赖GUI资源。当前捆绑Python能运行CLI/SQLite，但Tcl初始化缺init.tcl；M02需准备完整的Windows Python/Tcl-Tk，不能因import tkinter成功就称GUI可用。
 Windows是开发和仿真验收环境；真实Modbus设备、物理规模、现场SAT、保护/硬实时和商业可靠性验证不在本轮执行。产品文档中的原商用指标保留为未来工程化参考，不能用仿真结果代替。
 当前状态见 [CURRENT_STAGE.md](docs/roadmap/CURRENT_STAGE.md)，迁移操作见 [MIGRATION.md](MIGRATION.md)。
+
+## M0.1.2 实施补充（2026-09-28）
+
+`ems/domain/` 定义不可变领域对象及边界校验；`contracts/` 保存静态契约与样例。该层无网络、数据库或后台任务。`demo-contracts` 只读取样例并验证 JSON 往返；仿真采样链从 M0.1.3 开始。阶段状态以 CURRENT_STAGE.md 为准。

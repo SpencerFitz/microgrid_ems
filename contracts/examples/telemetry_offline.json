@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "messageId": "msg-demo-002",
+  "eventType": "telemetry.updated",
+  "siteId": "site01",
+  "producer": "device_gateway",
+  "publishedAt": "2026-09-28T00:00:06.050Z",
+  "correlationId": "poll-demo-002",
+  "payload": {
+    "sampleId": "sample-demo-002",
+    "siteId": "site01",
+    "deviceId": "ess01",
+    "tagId": "site01.ess01.soc",
+    "value": 60,
+    "timestamp": "2026-09-28T00:00:00Z",
+    "receivedAt": "2026-09-28T00:00:06.040Z",
+    "quality": "OFFLINE",
+    "qualityTimestamp": "2026-09-28T00:00:06Z",
+    "unit": "%",
+    "source": "SIMULATOR",
+    "producerEpoch": "gateway-demo-001",
+    "sequence": 2,
+    "configVersion": "python-windows-v1",
+    "reason": "simulated disconnect"
+  }
+}

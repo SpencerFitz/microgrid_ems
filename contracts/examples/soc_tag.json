@@ -1,0 +1,17 @@
+{
+  "id": "site01.ess01.soc",
+  "siteId": "site01",
+  "deviceId": "ess01",
+  "name": "储能SOC",
+  "dataType": "FLOAT64",
+  "unit": "%",
+  "writable": false,
+  "minValue": 0,
+  "maxValue": 100,
+  "deadband": 0,
+  "samplingIntervalMs": 1000,
+  "staleAfterMs": 3000,
+  "offlineAfterMs": 5000,
+  "source": "DRIVER",
+  "configVersion": "python-windows-v1"
+}

@@ -1,6 +1,6 @@
 # microgrid_ems — Python / Windows 仿真版
 
-所有项目程序使用Python，Windows本机模拟运行。当前为 **M0.1.1 / READY_FOR_REVIEW**，已实际通过测试和CLI Demo，等待用户验收；尚不产生PV/SOC遥测。
+所有项目程序使用Python，Windows本机模拟运行。当前为 **M0.1.2 / READY_FOR_REVIEW**。M0.1.1 已由用户确认本机验证成功；本步增加领域对象、数据契约和静态 SOC 样例，等待本步验收。
 技术路线取代之前版本，详见 [架构](ARCHITECTURE.md)、[迁移说明](MIGRATION.md)、[当前阶段](docs/roadmap/CURRENT_STAGE.md)。
 
 ## 直接运行
@@ -13,6 +13,7 @@ python ems.py doctor
 python ems.py validate
 python -m unittest discover -s tests -v
 python ems.py demo
+python ems.py demo-contracts
 python ems.py status
 ```
 
@@ -28,10 +29,16 @@ python ems.py run
 另一个终端执行status查看活跃状态；原终端按Ctrl+C停止。也可 `python ems.py run --ticks 3` 运行三次心跳自动结束。相同数据目录只能有一个实例，第二个返回非零错误。
 全局参数必须在子命令前：`python ems.py --data-dir runtime-demo demo`；使用独立目录进行不同实验，停止不会删除数据。
 
-## 本步到底实现了什么
+## M0.1.2 新增内容
+
+`ems/domain/` 提供站点、设备、点表、遥测、消息封装和不可变快照类型；`contracts/` 提供 JSON Schema 和示例。`demo-contracts` 演示 SOC=60 的 GOOD 样本与保留相同测量时间的 OFFLINE 事件，结果应 PASS。本步不自动采样，不启动 Simulator。
+
+详见 [契约用法](contracts/README.md)、[学习与升级操作](docs/learning/M0.1.2_LEARNING.md)、[验证记录](docs/learning/M0.1.2_VALIDATION.md)。先在本机测试、理解并验收，再同步 GitHub。
+
+## 已完成的 M0.1.1 基础
 
 配置文件→严格校验→注册simulator/device_gateway/ems_core/data_service四个逻辑组件→心跳/结构化日志→停止→重启验证启动元数据保留。
-这四个名称目前只是bootstrap中的组件清单，未实现物理Simulator、数据采集、消息总线或历史遥测。对应业务将在M0.1.2～9逐步加入。
+这四个名称目前只是bootstrap中的组件清单，未实现物理Simulator、数据采集、消息总线或历史遥测。对应业务将在M0.1.3～9逐步加入。
 
 | 文件 | 用途 |
 |---|---|

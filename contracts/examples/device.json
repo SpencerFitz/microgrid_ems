@@ -1,0 +1,13 @@
+{
+  "id": "ess01",
+  "siteId": "site01",
+  "name": "模拟储能",
+  "type": "ESS_PCS",
+  "vendor": "SIMULATOR",
+  "model": "teaching-ess",
+  "driver": "simulator",
+  "protocol": "PYTHON",
+  "enabled": true,
+  "status": "ONLINE",
+  "configVersion": "python-windows-v1"
+}

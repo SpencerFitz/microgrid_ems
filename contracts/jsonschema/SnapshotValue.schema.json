@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SnapshotValue",
+  "$comment": "Structural contract. Python also validates cross-field relations and point-definition semantics.",
+  "$ref": "domain.schema.json#/$defs/SnapshotValue"
+}

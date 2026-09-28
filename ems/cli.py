@@ -19,6 +19,7 @@ def main(argv=None):
     commands.add_parser("doctor", help="check Python/Windows/SQLite without writing data")
     commands.add_parser("validate", help="validate configuration without starting")
     commands.add_parser("demo", help="run two short lifecycle sessions and verify retention")
+    commands.add_parser("demo-contracts", help="validate static domain fixtures and explain OFFLINE quality")
     commands.add_parser("status", help="inspect recorded heartbeat and live instance lock")
     run_parser = commands.add_parser("run", help="foreground runtime; Ctrl+C to stop")
     run_parser.add_argument("--ticks", type=int, default=0, help="0 runs until Ctrl+C")
@@ -31,6 +32,9 @@ def main(argv=None):
             result = {"status": "READY_M01", "python": platform.python_version(),
                       "platform": platform.platform(), "sqlite": sqlite3.sqlite_version,
                       "externalServicesRequired": False, "guiChecked": False}
+        elif args.command == "demo-contracts":
+            from .domain.demo import demo_contracts
+            result = demo_contracts(ROOT)
         elif args.command == "validate":
             config = load_config(args.config)
             result = {"status": "VALID", "siteId": config.site_id, "configVersion": config.config_version}

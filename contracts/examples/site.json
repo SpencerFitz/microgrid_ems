@@ -1,0 +1,10 @@
+{
+  "id": "site01",
+  "name": "教学园区",
+  "timezone": "Asia/Shanghai",
+  "pccDeviceId": "pcc01",
+  "ratedPowerKw": 1000,
+  "gridImportLimitKw": 800,
+  "gridExportLimitKw": 0,
+  "configVersion": "python-windows-v1"
+}

@@ -1,0 +1,825 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "Site": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z0-9_-]+$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "timezone": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "enum": [
+            "Asia/Shanghai",
+            "UTC"
+          ]
+        },
+        "pccDeviceId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z0-9_-]+$"
+        },
+        "ratedPowerKw": {
+          "type": "number",
+          "minimum": 0
+        },
+        "gridImportLimitKw": {
+          "type": "number",
+          "minimum": 0
+        },
+        "gridExportLimitKw": {
+          "type": "number",
+          "minimum": 0
+        },
+        "configVersion": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "timezone",
+        "pccDeviceId",
+        "ratedPowerKw",
+        "gridImportLimitKw",
+        "gridExportLimitKw",
+        "configVersion"
+      ],
+      "additionalProperties": false
+    },
+    "Device": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z0-9_-]+$"
+        },
+        "siteId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z0-9_-]+$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "GRID_METER",
+            "METER",
+            "PV_INVERTER",
+            "ESS_PCS",
+            "BMS",
+            "EVSE",
+            "MGCC",
+            "PLC",
+            "BREAKER",
+            "WEATHER"
+          ]
+        },
+        "vendor": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "driver": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "protocol": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "DISABLED",
+            "DISCONNECTED",
+            "CONNECTING",
+            "ONLINE",
+            "DEGRADED"
+          ]
+        },
+        "configVersion": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        }
+      },
+      "required": [
+        "id",
+        "siteId",
+        "name",
+        "type",
+        "vendor",
+        "model",
+        "driver",
+        "protocol",
+        "enabled",
+        "status",
+        "configVersion"
+      ],
+      "additionalProperties": false
+    },
+    "TagDefinition": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z0-9_-]+\\.[a-z0-9_-]+\\.[a-z][a-z0-9_]*$"
+        },
+        "siteId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z0-9_-]+$"
+        },
+        "deviceId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z0-9_-]+$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "dataType": {
+          "type": "string",
+          "enum": [
+            "FLOAT64",
+            "INT64",
+            "BOOL",
+            "STRING"
+          ]
+        },
+        "unit": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "enum": [
+            "kW",
+            "kvar",
+            "kWh",
+            "V",
+            "A",
+            "Hz",
+            "%",
+            "°C",
+            "1"
+          ]
+        },
+        "writable": {
+          "type": "boolean"
+        },
+        "deadband": {
+          "type": "number",
+          "minimum": 0
+        },
+        "samplingIntervalMs": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "staleAfterMs": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "offlineAfterMs": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "source": {
+          "type": "string",
+          "enum": [
+            "DRIVER",
+            "CALCULATED",
+            "MANUAL"
+          ]
+        },
+        "configVersion": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "minValue": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "maxValue": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "siteId",
+        "deviceId",
+        "name",
+        "dataType",
+        "unit",
+        "writable",
+        "deadband",
+        "samplingIntervalMs",
+        "staleAfterMs",
+        "offlineAfterMs",
+        "source",
+        "configVersion"
+      ],
+      "additionalProperties": false
+    },
+    "TelemetrySample": {
+      "type": "object",
+      "properties": {
+        "sampleId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "siteId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z0-9_-]+$"
+        },
+        "deviceId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z0-9_-]+$"
+        },
+        "tagId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z0-9_-]+\\.[a-z0-9_-]+\\.[a-z][a-z0-9_]*$"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,6})?Z$"
+        },
+        "receivedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,6})?Z$"
+        },
+        "quality": {
+          "type": "string",
+          "enum": [
+            "GOOD",
+            "BAD",
+            "STALE",
+            "OFFLINE",
+            "MANUAL",
+            "UNCERTAIN"
+          ]
+        },
+        "qualityTimestamp": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,6})?Z$"
+        },
+        "unit": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "enum": [
+            "kW",
+            "kvar",
+            "kWh",
+            "V",
+            "A",
+            "Hz",
+            "%",
+            "°C",
+            "1"
+          ]
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "producerEpoch": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "configVersion": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "sampleId",
+        "siteId",
+        "deviceId",
+        "tagId",
+        "value",
+        "timestamp",
+        "receivedAt",
+        "quality",
+        "qualityTimestamp",
+        "unit",
+        "source",
+        "producerEpoch",
+        "sequence",
+        "configVersion"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "quality": {
+                "const": "GOOD"
+              }
+            },
+            "required": [
+              "quality"
+            ]
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "not": {
+                  "type": "null"
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "tagId": {
+                "pattern": "\\.soc$"
+              }
+            },
+            "required": [
+              "tagId"
+            ]
+          },
+          "then": {
+            "properties": {
+              "unit": {
+                "const": "%"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "TelemetryEnvelope": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "type": "integer",
+          "const": 1
+        },
+        "messageId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "eventType": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "const": "telemetry.updated"
+        },
+        "siteId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z0-9_-]+$"
+        },
+        "producer": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "publishedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,6})?Z$"
+        },
+        "correlationId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "payload": {
+          "$ref": "#/$defs/TelemetrySample"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "messageId",
+        "eventType",
+        "siteId",
+        "producer",
+        "publishedAt",
+        "correlationId",
+        "payload"
+      ],
+      "additionalProperties": false
+    },
+    "SnapshotValue": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unit": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "enum": [
+            "kW",
+            "kvar",
+            "kWh",
+            "V",
+            "A",
+            "Hz",
+            "%",
+            "°C",
+            "1"
+          ]
+        },
+        "sampleTimestamp": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,6})?Z$"
+        },
+        "receivedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,6})?Z$"
+        },
+        "effectiveQuality": {
+          "type": "string",
+          "enum": [
+            "GOOD",
+            "BAD",
+            "STALE",
+            "OFFLINE",
+            "MANUAL",
+            "UNCERTAIN"
+          ]
+        },
+        "qualityTimestamp": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,6})?Z$"
+        },
+        "ageMs": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sampleId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        }
+      },
+      "required": [
+        "value",
+        "unit",
+        "sampleTimestamp",
+        "receivedAt",
+        "effectiveQuality",
+        "qualityTimestamp",
+        "ageMs",
+        "sampleId",
+        "source"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "effectiveQuality": {
+                "const": "GOOD"
+              }
+            },
+            "required": [
+              "effectiveQuality"
+            ]
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "not": {
+                  "type": "null"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "SystemSnapshot": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "siteId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z0-9_-]+$"
+        },
+        "cycle": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "coreEpoch": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,6})?Z$"
+        },
+        "cutoffTime": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,6})?Z$"
+        },
+        "configVersion": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "operatingMode": {
+          "type": "string",
+          "enum": [
+            "STOPPED",
+            "GRID_CONNECTED",
+            "ISLAND_TRANSITION",
+            "ISLAND",
+            "BLACK_START",
+            "FAULT",
+            "MAINTENANCE"
+          ]
+        },
+        "tags": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/SnapshotValue"
+          }
+        },
+        "grid": {
+          "type": "object",
+          "properties": {
+            "activePowerKw": {
+              "type": "string"
+            },
+            "reactivePowerKvar": {
+              "type": "string"
+            },
+            "voltageV": {
+              "type": "string"
+            },
+            "frequencyHz": {
+              "type": "string"
+            },
+            "gridPresent": {
+              "type": "string"
+            },
+            "breakerState": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "load": {
+          "type": "object",
+          "properties": {
+            "activePowerKw": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "pv": {
+          "type": "object",
+          "properties": {
+            "activePowerKw": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "ess": {
+          "type": "object",
+          "properties": {
+            "activePowerKw": {
+              "type": "string"
+            },
+            "soc": {
+              "type": "string"
+            },
+            "maxChargePowerKw": {
+              "type": "string"
+            },
+            "maxDischargePowerKw": {
+              "type": "string"
+            },
+            "online": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "ev": {
+          "type": "object",
+          "properties": {
+            "activePowerKw": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "completeness": {
+          "type": "string",
+          "enum": [
+            "COMPLETE",
+            "INCOMPLETE"
+          ]
+        },
+        "controlEligible": {
+          "type": "boolean",
+          "const": false
+        },
+        "missingTagIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
+        },
+        "invalidTagIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
+        },
+        "calculatedPcc": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SnapshotValue"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "balanceResidual": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SnapshotValue"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "siteId",
+        "cycle",
+        "coreEpoch",
+        "timestamp",
+        "cutoffTime",
+        "configVersion",
+        "operatingMode",
+        "tags",
+        "grid",
+        "load",
+        "pv",
+        "ess",
+        "ev",
+        "completeness",
+        "controlEligible",
+        "missingTagIds",
+        "invalidTagIds"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

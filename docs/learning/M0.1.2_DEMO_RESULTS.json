@@ -1,0 +1,95 @@
+{
+  "date": "2026-09-28",
+  "githubReadOnlyBase": "bc46b9106e08610aef0a8fd390fb35d268f5d014",
+  "testExitCode": 0,
+  "doctor": {
+    "status": "READY_M01",
+    "python": "3.12.14",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "sqlite": "3.53.1",
+    "externalServicesRequired": false,
+    "guiChecked": false
+  },
+  "config": {
+    "status": "VALID",
+    "siteId": "site01",
+    "configVersion": "python-windows-v1"
+  },
+  "contracts": {
+    "result": "PASS",
+    "stage": "M0.1.2",
+    "source": "static JSON fixtures",
+    "good": {
+      "sampleId": "sample-demo-001",
+      "siteId": "site01",
+      "deviceId": "ess01",
+      "tagId": "site01.ess01.soc",
+      "value": 60,
+      "timestamp": "2026-09-28T00:00:00Z",
+      "receivedAt": "2026-09-28T00:00:00.040000Z",
+      "quality": "GOOD",
+      "qualityTimestamp": "2026-09-28T00:00:00Z",
+      "unit": "%",
+      "source": "SIMULATOR",
+      "producerEpoch": "gateway-demo-001",
+      "sequence": 1,
+      "configVersion": "python-windows-v1",
+      "reason": null
+    },
+    "offline": {
+      "sampleId": "sample-demo-002",
+      "siteId": "site01",
+      "deviceId": "ess01",
+      "tagId": "site01.ess01.soc",
+      "value": 60,
+      "timestamp": "2026-09-28T00:00:00Z",
+      "receivedAt": "2026-09-28T00:00:06.040000Z",
+      "quality": "OFFLINE",
+      "qualityTimestamp": "2026-09-28T00:00:06Z",
+      "unit": "%",
+      "source": "SIMULATOR",
+      "producerEpoch": "gateway-demo-001",
+      "sequence": 2,
+      "configVersion": "python-windows-v1",
+      "reason": "simulated disconnect"
+    },
+    "sampleTimestampPreserved": true,
+    "snapshotControlEligible": false,
+    "explanation": "SOC 60% 是同一次历史测量。OFFLINE 更新质量判断时间，不把旧值变成新测量；此时不能据它控制设备。"
+  },
+  "bootstrap": {
+    "result": "PASS",
+    "stage": "M0.1.1",
+    "components": [
+      "simulator",
+      "device_gateway",
+      "ems_core",
+      "data_service"
+    ],
+    "firstTicks": 3,
+    "secondTicks": 3,
+    "retainedInstallationId": "1b6ba410-7123-47ba-b9f3-4d3ee1831fe4",
+    "finishedAt": "2026-09-28T01:16:07.462Z",
+    "scope": "configuration/lifecycle/logs/SQLite metadata; not telemetry"
+  },
+  "status": {
+    "state": "STOPPED",
+    "recordedState": "STOPPED",
+    "live": false,
+    "heartbeatAgeSeconds": 0.179,
+    "lastRecord": {
+      "stage": "M0.1.1",
+      "state": "STOPPED",
+      "pid": 22776,
+      "updatedAt": "2026-09-28T01:16:07.461Z",
+      "ticks": 3,
+      "components": {
+        "simulator": "STOPPED",
+        "device_gateway": "STOPPED",
+        "ems_core": "STOPPED",
+        "data_service": "STOPPED"
+      },
+      "meaning": "bootstrap health only; no telemetry or control"
+    }
+  }
+}

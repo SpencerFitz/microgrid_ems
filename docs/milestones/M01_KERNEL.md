@@ -1,6 +1,6 @@
 # M01_KERNEL：Python / Windows 仿真内核
 
-版本 baseline-pywin-0.2，2026-09-24。M0.1.1～M0.1.9每步单独实施、测试、Demo及人工验收。当前授权仅.1；后续命令均为规划，尚未实现。
+版本 baseline-pywin-0.2，2026-09-24。M0.1.1～M0.1.9每步单独实施、测试、Demo及人工验收。更新于2026-09-28：M0.1.1已获用户确认，当前实施M0.1.2；.3～.9命令仍为规划。
 
 ## 总目标、学习目标、范围与非目标
 
@@ -33,7 +33,7 @@ ESS正放电负充电；教学容量1000kWh、效率1，仅作为理想模拟。
 ## 命令和门禁
 
 当前可运行：`python ems.py doctor`、`validate`、`run --ticks 3`、`run`、`status`、`demo`；测试：`python -m unittest discover -s tests -v`。CLI全局--config/--data-dir位于子命令前。
-以下.2～.9的test/demo命令或测试文件由对应步骤创建，不能提前运行或当作已通过。每步记录准确命令、退出码和实际结果；READY_FOR_REVIEW不等于ACCEPTED。
+M0.1.2新增 `python ems.py demo-contracts`、tests/test_contracts.py、tests/test_schema_examples.py。以下.3～.9的test/demo命令或测试文件由对应步骤创建，不能提前运行或当作已通过。每步记录准确命令、退出码和实际结果；READY_FOR_REVIEW不等于ACCEPTED。
 测试使用tempfile隔离目录，不读取/删除用户其他数据。持久数据放runtime/，停止不删除；新实例不能同时写同一数据目录。错误返回非零。
 
 ## M0.1.1 — 仓库脚手架
@@ -54,7 +54,7 @@ ESS正放电负充电；教学容量1000kWh、效率1，仅作为理想模拟。
 
 **验收：** doctor/validate/unit tests/demo均实际通过；无联网服务依赖；不把健康名解释为遥测就绪。
 
-**完成条件：** 当前11项测试和Demo已通过，等待用户理解/验收；只标READY_FOR_REVIEW。
+**完成条件：** 11项基础测试和Demo已通过；2026-09-28 用户反馈本机验证成功且已同步 GitHub，本步记 ACCEPTED。
 
 ## M0.1.2 — 核心领域对象与契约
 
@@ -70,7 +70,7 @@ ESS正放电负充电；教学容量1000kWh、效率1，仅作为理想模拟。
 
 **测试：** 身份/单位/数据类型、GOOD+null拒绝、SOC范围、非有限数字、未知schema、深层不可变；旧值质量变化不更新时间。
 
-**Demo：** 展示SOC60 GOOD与相同采样时间的OFFLINE事件，说明两者差异。
+**Demo：** `python ems.py demo-contracts` 展示静态样例SOC60 GOOD与相同采样时间的OFFLINE事件，说明两者差异；不是实际采集或自动离线检测。
 
 **验收：** JSON/对象/规范一致，错误定位明确，测试不依赖外部服务。
 

@@ -66,7 +66,7 @@ topic保留五段格式 `ems.<site>.<domain>.<entity>.<event>`，仅作为本地
 ## 3. Python边界（按步骤实现）
 
 ```python
-# 类型在M0.1.2定义，这里仅是设计签名。
+# 下列 Protocol 及非领域辅助返回类型在对应组件步骤实现；此处仅是设计签名。
 class DeviceDriver(Protocol):
     def connect(self) -> None: ...
     def read(self) -> tuple[RawMeasurement, ...]: ...
@@ -104,7 +104,7 @@ GUI通过Facade请求/查询和订阅视图事件，主线程不等待求解。P
 REST/WebSocket/MQTT是原产品北向能力目标，仿真版先以Facade与Python测试客户端表达相同用例。M09若要演示网络接口，使用Python本机loopback实现并单独验收，不成为M01启动依赖，不要求浏览器前端或外部broker。
 站点/用户授权、查询分页、错误、命令幂等与计划版本语义沿用领域基线；所有对外控制仍走完整控制链。不能将Facade单元测试冒充网络协议验收。
 
-## 6. 当前M0.1.1 CLI
+## 6. 当前 CLI（M0.1.1～M0.1.2）
 
 | 命令 | 含义 |
 |---|---|
@@ -114,5 +114,6 @@ REST/WebSocket/MQTT是原产品北向能力目标，仿真版先以Facade与Pyth
 | python ems.py run | 前台持续运行，Ctrl+C退出 |
 | python ems.py status | 状态记录+Windows实例锁+5s新鲜度判断，陈旧记录不当活跃 |
 | python ems.py demo | 两次启动/停止，验证SQLite启动标记保留 |
+| python ems.py demo-contracts | M0.1.2：静态 JSON 校验、往返与 GOOD/OFFLINE 对比，无采集 |
 
 全局参数 --config/--data-dir 放在子命令前。错误输出stderr JSON并返回1；参数错误返回2。数据目录独占锁由Windows在进程退出时释放，不能通过删除锁文件绕过正在运行的实例。

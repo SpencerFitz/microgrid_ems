@@ -6,3 +6,9 @@
 {"time": "2026-09-28T00:52:09.526Z", "level": "INFO", "service": "ems_runtime", "siteId": "site01", "message": "bootstrap stopped; local files retained"}
 {"time": "2026-09-28T00:52:09.538Z", "level": "INFO", "service": "ems_runtime", "siteId": "site01", "message": "bootstrap started; four logical modules; no business data"}
 {"time": "2026-09-28T00:52:09.564Z", "level": "INFO", "service": "ems_runtime", "siteId": "site01", "message": "bootstrap stopped; local files retained"}
+{"time": "2026-09-28T01:04:47.569Z", "level": "INFO", "service": "ems_runtime", "siteId": "site01", "message": "bootstrap started; four logical modules; no business data"}
+{"time": "2026-09-28T01:04:55.570Z", "level": "INFO", "service": "ems_runtime", "siteId": "site01", "message": "stop requested"}
+{"time": "2026-09-28T01:04:55.573Z", "level": "INFO", "service": "ems_runtime", "siteId": "site01", "message": "bootstrap stopped; local files retained"}
+{"time": "2026-09-28T01:04:58.883Z", "level": "INFO", "service": "ems_runtime", "siteId": "site01", "message": "bootstrap started; four logical modules; no business data"}
+{"time": "2026-09-28T01:07:05.172Z", "level": "ERROR", "service": "ems_runtime", "siteId": "site01", "message": "bootstrap failed"}
+{"time": "2026-09-28T01:07:05.174Z", "level": "INFO", "service": "ems_runtime", "siteId": "site01", "message": "bootstrap stopped; local files retained"}

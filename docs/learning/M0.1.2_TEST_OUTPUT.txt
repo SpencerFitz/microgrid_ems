@@ -1,0 +1,32 @@
+test_all_examples_roundtrip (test_contracts.ContractTests.test_all_examples_roundtrip) ... ok
+test_deep_immutability_and_detached_serialization (test_contracts.ContractTests.test_deep_immutability_and_detached_serialization) ... ok
+test_definition_timing_bounds (test_contracts.ContractTests.test_definition_timing_bounds) ... ok
+test_demo_cli (test_contracts.ContractTests.test_demo_cli) ... ok
+test_good_null_and_nonfinite (test_contracts.ContractTests.test_good_null_and_nonfinite) ... ok
+test_int_bool_string_and_numeric_bounds (test_contracts.ContractTests.test_int_bool_string_and_numeric_bounds) ... ok
+test_offline_preserves_measurement_time (test_contracts.ContractTests.test_offline_preserves_measurement_time) ... ok
+test_point_identity_and_definition (test_contracts.ContractTests.test_point_identity_and_definition) ... ok
+test_reject_missing_unknown_duplicate_keys (test_contracts.ContractTests.test_reject_missing_unknown_duplicate_keys) ... ok
+test_site_and_device_validation (test_contracts.ContractTests.test_site_and_device_validation) ... ok
+test_snapshot_references_and_no_control (test_contracts.ContractTests.test_snapshot_references_and_no_control) ... ok
+test_soc_limits_and_types (test_contracts.ContractTests.test_soc_limits_and_types) ... ok
+test_utc_only_and_real_dates (test_contracts.ContractTests.test_utc_only_and_real_dates) ... ok
+test_doctor_and_validate (test_scaffold.CLITests.test_doctor_and_validate) ... ok
+test_invalid_config_nonzero (test_scaffold.CLITests.test_invalid_config_nonzero) ... ok
+test_live_lock_crash_recovery (test_scaffold.CLITests.test_live_lock_crash_recovery) ... ok
+test_bad_json_unknown_missing_and_duplicate (test_scaffold.ConfigTests.test_bad_json_unknown_missing_and_duplicate) ... ok
+test_invalid_fields (test_scaffold.ConfigTests.test_invalid_fields) ... ok
+test_valid_config (test_scaffold.ConfigTests.test_valid_config) ... ok
+test_demo_and_logs (test_scaffold.RuntimeTests.test_demo_and_logs) ... ok
+test_exclusive_lock_and_release (test_scaffold.RuntimeTests.test_exclusive_lock_and_release) ... ok
+test_keyboard_interrupt_stops_and_keeps_files (test_scaffold.RuntimeTests.test_keyboard_interrupt_stops_and_keeps_files) ... ok
+test_missing_and_stale_status (test_scaffold.RuntimeTests.test_missing_and_stale_status) ... ok
+test_unwritable_data_location (test_scaffold.RuntimeTests.test_unwritable_data_location) ... ok
+test_control_and_resource_shape_rejected (test_schema_examples.SchemaExampleTests.test_control_and_resource_shape_rejected) ... ok
+test_examples_match_structural_schemas (test_schema_examples.SchemaExampleTests.test_examples_match_structural_schemas) ... ok
+test_invalid_envelopes_rejected_by_schema (test_schema_examples.SchemaExampleTests.test_invalid_envelopes_rejected_by_schema) ... ok
+
+----------------------------------------------------------------------
+Ran 27 tests in 1.734s
+
+OK

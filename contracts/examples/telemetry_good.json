@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "messageId": "msg-demo-001",
+  "eventType": "telemetry.updated",
+  "siteId": "site01",
+  "producer": "device_gateway",
+  "publishedAt": "2026-09-28T00:00:00.050Z",
+  "correlationId": "poll-demo-001",
+  "payload": {
+    "sampleId": "sample-demo-001",
+    "siteId": "site01",
+    "deviceId": "ess01",
+    "tagId": "site01.ess01.soc",
+    "value": 60,
+    "timestamp": "2026-09-28T00:00:00Z",
+    "receivedAt": "2026-09-28T00:00:00.040Z",
+    "quality": "GOOD",
+    "qualityTimestamp": "2026-09-28T00:00:00Z",
+    "unit": "%",
+    "source": "SIMULATOR",
+    "producerEpoch": "gateway-demo-001",
+    "sequence": 1,
+    "configVersion": "python-windows-v1"
+  }
+}
