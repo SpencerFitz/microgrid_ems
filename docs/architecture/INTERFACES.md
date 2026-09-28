@@ -1,45 +1,28 @@
-# 服务间接口与消息契约
+# Python / Windows 模块接口
 
-版本：baseline-0.1。字段语义遵循 [DOMAIN_MODEL.md](DOMAIN_MODEL.md)。这是待实现的规范，所有示例均非运行证据。M01 只实施表内标记为 M01 的接口。
+版本 baseline-pywin-0.2。字段语义以 [DOMAIN_MODEL.md](DOMAIN_MODEL.md) 为准；本文件替代旧部署的通信机制。M01不用HTTP服务间调用，也不启动消息或数据库服务器。
 
-## 1. 通用约定
+## 1. 统一契约
 
-- 对外 `/api/v1`，实时 `/ws/v1/realtime`；api-server 是唯一对外业务入口。
-- 内部同步使用 REST，异步使用 NATS JetStream；M01 不实现 gRPC/protobuf。
-- UTF-8 JSON，lowerCamelCase，时间 UTC RFC3339，ID/单位/正负方向按领域文档。
-- HTTPS/TLS、服务身份、站点授权；M01 仅开发隔离网络，内部端口仅绑定本机，不以此代表生产安全完成。
-- 所有请求关联 `X-Request-Id`；写请求携带 `Idempotency-Key`，同站点/主体/路径/键且 body 相同返回原结果，不同 body 返回 409。
-- 请求设 deadline；M01 普通只读请求默认 2 s，Gateway 仿真轮询默认 800 ms（小于 1 s 采样周期）；未来算法为异步 job，不占用控制循环。
-- 400 格式错误；401 未认证；403 未授权；404 未找到；409 版本/幂等/状态冲突；422 领域约束失败；429 限流；503 暂不可用。不得用 HTTP 200 隐藏业务失败。
-- 错误格式：`{"error":{"code":"TAG_UNKNOWN","message":"Unknown tag","requestId":"req-demo","details":{}}}`。不泄露凭据或堆栈。
-- 列表为 `items[]、nextCursor?`；limit 默认 100、最大 1000，稳定排序；历史时间范围 [from,to)，最大窗口按配置，超限 422。
-- 配置/计划写入使用 expectedVersion 或 If-Match，冲突返回 409；不能静默覆盖新版本。
+Python内部snake_case；JSON导入/导出及消息封装lowerCamelCase；时间UTC RFC3339，单位/符号不变。使用dataclass/Enum/Protocol表达领域与接口；禁止跨模块修改对方内部字典。不可变对象需要深层不可变映射/tuple，不能只加frozen=True后保留可变dict。
+异常按ConfigError、ValidationError、Unavailable、Timeout、Conflict等显式类型表达；Application Facade再转换为用户可读结果。M0.1.1只实现配置错误和实例冲突，其他在进入步骤时增加。
 
-## 2. NATS Subject 与所有权
+## 2. EventBus（M0.1.5实现）
 
-固定格式：`ems.<site>.<domain>.<entity>.<event>`，五段。禁止把任意 TagID 整段塞进 entity。
+topic保留五段格式 `ems.<site>.<domain>.<entity>.<event>`，仅作为本地事件名称，不是外部服务器地址。
 
-| Subject 示例/模板 | 生产者 | 消费者 | Payload | 阶段 |
-|---|---|---|---|---|
-| ems.site01.telemetry.ess01.updated | Gateway | core、data-service | TelemetrySample | M01 |
-| ems.site01.device.ess01.connected / disconnected | Gateway | core、data-service（后续告警） | DeviceConnectionEvent | M01 |
-| ems.site01.snapshot.current.updated | core | 本地诊断/后续 api-server | SystemSnapshot | M01 |
-| ems.site01.command.ess01.requested | core Command Manager | Gateway | CommandRequest | M03 |
-| ems.site01.command.ess01.accepted | Gateway | core | CommandAccepted | M03 |
-| ems.site01.command.ess01.completed | Gateway | core | DeviceExecutionResult | M03 |
-| ems.site01.command.ess01.state_changed | core | data-service、api-server | CommandEvent | M03 |
-| ems.site01.control.proposal.created | core | 诊断/审计订阅者 | ControlProposal | M03 |
-| ems.site01.alarm.pcs01.raised / acknowledged / recovered | data-service | api-server | Alarm | M02 |
-| ems.site01.plan.dayahead.created / activated / superseded | core | API、优化、数据服务 | PlanEvent（id/version/status） | M05 |
-| ems.site01.plan.intraday.created / activated / superseded | core | 同上 | PlanEvent | M06 |
-| ems.site01.mode.current.changed | core | API、数据服务 | ModeTransition | M07 |
-| ems.site01.audit.operation.recorded | 业务服务 | data-service | AuditEvent | M03/M09 |
-| ems.site01.config.current.changed | api-server | 各运行服务 | ConfigChanged(version,hash) | M09 |
+| topic | 生产者→消费者 | 阶段 |
+|---|---|---|
+| ems.site01.telemetry.ess01.updated | Gateway→Snapshot、Historian | M01 |
+| ems.site01.device.ess01.connected/disconnected | Gateway→状态缓存、后续告警 | M01 |
+| ems.site01.snapshot.current.updated | Core→CLI/后续GUI | M01 |
+| ems.site01.command.ess01.requested | CommandManager→Gateway | M03 |
+| ems.site01.command.ess01.accepted/completed | Gateway→CommandManager | M03 |
+| ems.site01.command.ess01.state_changed | Core→Audit/GUI | M03 |
+| ems.site01.plan.dayahead.created/activated | Core→GUI/Dispatch | M05 |
+| ems.site01.mode.current.changed | Core→GUI/Audit | M07 |
 
-Core 内 Controller→Arbiter 使用同步函数调用，不依赖 NATS 回送本进程以完成控制；proposal 事件供观察。NATS 同一消息可被多个 durable 独立消费。
-命令 subject 的发布权只授予 core；预测、优化、UI、MQTT 外部用户无发布权限。MQTT 的控制请求先经 api-server 授权再进入 core，不直通 NATS command。
-
-### 标准消息封装
+封装：schemaVersion、messageId、eventType、siteId、producer、publishedAt、correlationId、payload。核心遥测示例：
 
 ```json
 {
@@ -47,8 +30,8 @@ Core 内 Controller→Arbiter 使用同步函数调用，不依赖 NATS 回送�
   "messageId": "msg-demo-001",
   "eventType": "telemetry.updated",
   "siteId": "site01",
-  "producer": "device-gateway",
-  "publishedAt": "2026-09-23T06:00:00.050Z",
+  "producer": "device_gateway",
+  "publishedAt": "2026-09-24T00:00:00.050Z",
   "correlationId": "poll-demo-001",
   "payload": {
     "sampleId": "sample-demo-001",
@@ -56,190 +39,80 @@ Core 内 Controller→Arbiter 使用同步函数调用，不依赖 NATS 回送�
     "deviceId": "ess01",
     "tagId": "site01.ess01.soc",
     "value": 60,
-    "timestamp": "2026-09-23T06:00:00Z",
-    "receivedAt": "2026-09-23T06:00:00.040Z",
+    "timestamp": "2026-09-24T00:00:00Z",
+    "receivedAt": "2026-09-24T00:00:00.040Z",
     "quality": "GOOD",
-    "qualityTimestamp": "2026-09-23T06:00:00Z",
+    "qualityTimestamp": "2026-09-24T00:00:00Z",
     "unit": "%",
     "source": "SIMULATOR",
-    "producerEpoch": "gw-epoch-demo",
+    "producerEpoch": "gateway-demo-001",
     "sequence": 1,
-    "configVersion": "demo-v1"
+    "configVersion": "python-windows-v1"
   }
 }
 ```
 
-重传保持 messageId、sampleId、payload 不变，设置 `Nats-Msg-Id=messageId`。质量变更是新样本事件，新的 ID/sequence，数值可保留旧值和原 timestamp。Schema 和 subject/site/device 不一致的消息隔离，不能进入实时缓存。
-DeviceConnectionEvent：deviceId、status、timestamp、reason、producerEpoch、sequence。连接恢复通知先到时，数据质量仍等有效采样才恢复 GOOD。
+### 投递保证与失败
 
-## 3. JetStream 投递、重试和恢复（M01 实现部分）
+- 每订阅者独立queue.Queue，默认maxsize=1000；publish对每个订阅者返回投递成功/队列满结果，不无限阻塞。
+- 队列满时拒绝该订阅者本次投递、增加dropped计数并记录gap；其他订阅者继续收到。内存总线不是可靠历史仓库。
+- 不提供跨重启重放或durable consumer。进程重启后从新仿真采样重建Snapshot；未取得必需新鲜数据前禁控。
+- M01故意重注入重复/乱序消息，消费者按sampleId与时序规则处理。重复不依赖总线自动消除。
+- Historian消费后在自己的有界待写队列保留未提交批次；事务失败有限退避1/2/5s，超过缓存能力记录缺口，不阻塞core。重试复用sampleId，SQLite唯一键幂等。
+- 非法schema/topic/身份消息写隔离JSONL记录并计数；隔离写失败单独诊断，不能伪装已入库。
+- 命令不能沿用“队列满丢弃遥测”规则；M03需持久化状态、失败反馈和授权重试，危险操作不自动重放。
+- 所有后台线程支持停止信号/有限join，不得用daemon线程静默丢失待提交数据后声称优雅退出。
 
-本表为本次可复现实验默认值，非现场留存承诺。配置必须显式，不能依赖不可见默认设置。
+## 3. Python边界（按步骤实现）
 
-| 流 | Subjects | M01 默认策略 |
-|---|---|---|
-| EMS_TELEMETRY | ems.*.telemetry.*.updated、ems.*.device.*.* | 文件存储、Limits retention、MaxAge=24h、MaxBytes=1GiB、超限 DiscardOld、重复窗口 2min |
-| EMS_SNAPSHOT | ems.*.snapshot.*.updated | 文件存储、MaxAge=10min、MaxBytes=128MiB、DiscardOld |
-| EMS_COMMANDS（M03） | ems.*.command.*.* | 独立持久化、按命令保留/审计策略配置，不沿用遥测过期策略 |
+```python
+# 类型在M0.1.2定义，这里仅是设计签名。
+class DeviceDriver(Protocol):
+    def connect(self) -> None: ...
+    def read(self) -> tuple[RawMeasurement, ...]: ...
+    def close(self) -> None: ...
 
-- durable `core-site01-telemetry` 与 `historian-site01-telemetry` 分离，AckExplicit；AckWait=30s，MaxAckPending=1000。core 缓存处理后 ACK，Historian 在数据库事务提交后 ACK。
-- 正常应用关闭 drain；应用崩溃允许重投。JetStream 去重窗口不等于永久 exactly-once；业务必须基于 sampleId 去重。
-- DB 暂时错误采用有界退避 1/2/5/10/30s，延迟 NAK，无限消息投递次数由配置显式允许，应用无无限内存队列；重试仅在流保留时间/容量内可恢复。
-- 永久格式/未知 schema 错误：写持久化隔离记录（原消息、错误、时间、subject），成功后 TERM/ACK；隔离失败不确认并报警诊断。不得静默丢弃。
-- Gateway 断总线本地内存队列上限 10,000 事件，满时丢最旧遥测并增加 droppedSamples；恢复逐条重发原 ID。M01 不保证 Gateway 崩溃时未发布队列不丢失，明确记录限制。
-- 达到保留时间/容量造成的数据缺口必须报告；24h 只是上限条件之一，不承诺 1GiB 一定容纳 24h。
-- core 重启从已有 durable 的未确认位置继续；已确认最新值通过初始化历史重放重建：使用临时独立重放 consumer 读取流中保留遥测到启动水位，再与 live 消费按排序合并。禁止启动控制直至必需点新鲜。
-- 重放和 live 在缓存层幂等；历史已确认数据不能因 core 重放被重复插入数据库。M01 接口诊断暴露 recovering/degraded 状态。
-- M0.1.5 先验证发布/独立测试订阅者；正式 core 和 Historian durable 分别在 M0.1.6/7 接入。
+class TelemetryPublisher(Protocol):
+    def publish(self, sample: TelemetrySample) -> PublishResult: ...
 
-## 4. M01 进程内与仿真接口
+class SnapshotBuilder(Protocol):
+    def apply(self, sample: TelemetrySample) -> None: ...
+    def build(self, cutoff_time: datetime) -> SystemSnapshot: ...
 
-以下端口是 Compose 内服务端口；本机映射仅用于开发。不存在生产控制权。
-
-| 接口 | 输入/输出 | 拥有者/约束 |
-|---|---|---|
-| GET :8081/healthz、/readyz | liveness 200；依赖/配置就绪 200，否则 503 | Gateway；NATS 断开为 degraded/503，但继续有界采样 |
-| GET :8082/healthz、/readyz | 同上，ready 表示 Snapshot 管线初始化完成 | core；DB 不属于其就绪依赖 |
-| GET :8083/healthz、/readyz | 同上；DB/NATS 异常 ready 503 | data-service |
-| GET :8090/healthz | 仿真进程健康 | Simulator |
-| GET :8090/sim/v1/devices/{deviceId}/measurements | `{deviceId,timestamp,values:[{property,value,unit,quality}]}` | 仿真物理量；Gateway 负责补 Tag/ID/标准化 |
-| PUT :8090/sim/v1/scenario | `{loadPowerKw,pvPowerKw,essPowerKw,essSoc,evPowerKw}`→场景状态 | 本地测试专用；不是 EMS 控制接口 |
-| PUT :8090/sim/v1/devices/{id}/connection | `{online:false}`→状态 | 故障注入；轮询离线设备返回 503 |
-| GET :8082/internal/v1/snapshots/current?siteId=site01 | SystemSnapshot；尚未生成返回 503 | CLI/Demo 读取，无写接口 |
-| GET :8083/internal/v1/telemetry?siteId=...&tagId=...&from=...&to=...&limit=... | `{items:[TelemetrySample],nextCursor?}` | 只读 Historian；按 timestamp/sampleId 稳定排序 |
-
-Simulator 的 setter 只用于设定实验条件，默认与 Gateway/核心网络隔离的外部生产部署不得启用。离线注入以 503/超时模拟，不能直接向 core 写 quality。
-
-进程内 Go 接口（实现时可增加 context，禁止跨服务导入实现）：
-
-```text
-Driver.Connect(ctx) error
-Driver.Read(ctx) ([]RawMeasurement, error)
-Driver.Close(ctx) error
-TelemetryPublisher.Publish(ctx, sample) error
-SnapshotBuilder.Apply(sample) error
-SnapshotBuilder.Build(cutoffTime) (SystemSnapshot, error)
-Historian.Append(ctx, samples) error
-Historian.Query(ctx, filter) (Page, error)
+class Historian(Protocol):
+    def append(self, samples: tuple[TelemetrySample, ...]) -> None: ...
+    def query(self, query: HistoryQuery) -> HistoryPage: ...
 ```
 
-M0.1.4 使用可注入 recording Publisher 验证 Gateway，M0.1.5 替换为 NATS 实现；前一步不提前要求真实总线。Scheduler/Clock 可注入，质量阈值测试不依赖长时间 sleep。
+Gateway在M0.1.4先使用RecordingPublisher；M0.1.5替换为EventBus适配器。Simulator通过Python适配器read/set_scenario/set_connection提供输入和故障；测试setter不经过控制链，也不伪装成EMS控制器。
+轮询1000ms、超时800ms、STALE3000ms、OFFLINE5000ms。调用时限必须可取消/隔离，不能仅在阻塞调用返回后测时。M01仿真适配器使用可注入Clock/故障行为，真实协议不实现。
+原始配置JSON；历史查询时间区间[from,to)，按timestamp/sampleId排序，分页默认100最大1000。
 
-## 5. Command 接口（M03）
+## 4. 命令与计划（M03以后）
 
-外部 `POST /api/v1/commands` 表达用户意图：siteId、deviceId、action、parameters、reason、confirmationToken?。身份由认证上下文获得，禁止信任 body 自报 userId/priority。
-api-server→core `/internal/v1/command-intents`，执行授权、Proposal、仲裁、联锁与 Command Manager。202 返回 commandId、status、statusUrl；`GET /api/v1/commands/{id}` 查询生命周期。
+ApplicationFacade.submit_command意图字段：siteId、deviceId、action、parameters、reason、confirmationToken、idempotencyKey；身份从会话获得，不能信任界面自报priority/userId。
+Facade→Core产生Proposal→Arbiter→Interlock→CommandManager→Gateway模拟动作。
+接受回执accepted只表示入执行流程；设备回执EXECUTED/REJECTED/FAILED；最终SUCCEEDED由Core使用有效遥测核验。commandId重复不执行，过期不执行，未知结果不盲重试。
 
-Core 发到 `ems.site01.command.ess01.requested` 的 envelope.payload：
+ForecastService.submit_job：siteId、target、startTime、horizonMinutes、intervalMinutes、model→jobId。get_job返回状态/forecastId/error；get_series返回ForecastSeries。缺数不能填零冒充成功。
+OptimizationService.submit_dayahead：站点、预测ID、电价ID、约束版本、SOC0、窗口/分辨率→jobId；完成返回候选SchedulePlan，不能自激活。
+submit_intraday增加snapshotId、activePlanId、最新预测；默认4h/15min窗口。Core.validate_plan/approve_plan/activate_plan负责状态、权限、时效与原子版本替换；Dispatch只转换当前点为Proposal。
+GUI通过Facade请求/查询和订阅视图事件，主线程不等待求解。Python算法子进程用multiprocessing.Queue/Pipe传可序列化对象，结果附jobId和截止时间；超时交给Core降级。
 
-```json
-{
-  "commandId": "cmd-demo-001",
-  "siteId": "site01",
-  "deviceId": "ess01",
-  "action": "SET_ACTIVE_POWER",
-  "parameters": {"powerKw": -100},
-  "decisionId": "decision-demo-001",
-  "interlockResultId": "interlock-demo-001",
-  "snapshotId": "snap-demo-001",
-  "createdAt": "2026-09-23T06:00:00Z",
-  "expiresAt": "2026-09-23T06:00:03Z",
-  "timeoutMs": 3000,
-  "idempotencyKey": "operator-operation-demo-001"
-}
-```
+## 5. 对外接口范围
 
-这里 CommandRequest.commandId 映射领域 Command.id，刻意只传执行所需字段；必须验证 core 服务身份、有效期和设备适配能力。Gateway 不仅凭请求含有 interlockResultId 就信任任意客户端。
-accepted payload：`{commandId,accepted,receivedAt,reason?}`。accepted=false 由 core 转 REJECTED/FAILED。
-completed payload：`{commandId,status,executedAt,actualValue?,quality?,reason?}`，status=EXECUTED/REJECTED/FAILED，刻意不使用 SUCCEEDED 避免把驱动回执误认为端到端成功。
-core 用新鲜 telemetry/设备反馈验证后，发布最终 CommandEvent SUCCEEDED；数值容差/持续时间按项目配置。
-传输重试复用 commandId；超过 expiresAt 不再物理执行，重启危险命令不自动重放。危急停机由独立保护实现，不能依赖此异步链路时延。
+REST/WebSocket/MQTT是原产品北向能力目标，仿真版先以Facade与Python测试客户端表达相同用例。M09若要演示网络接口，使用Python本机loopback实现并单独验收，不成为M01启动依赖，不要求浏览器前端或外部broker。
+站点/用户授权、查询分页、错误、命令幂等与计划版本语义沿用领域基线；所有对外控制仍走完整控制链。不能将Facade单元测试冒充网络协议验收。
 
-## 6. Forecast API（M04）
+## 6. 当前M0.1.1 CLI
 
-外部 `POST /api/v1/forecasts/jobs` → api-server 转 forecast-service `POST /internal/v1/forecasts/jobs`。
-请求：siteId、target、startTime、horizonMinutes、intervalMinutes、model?；历史数据由 Data API 获取，禁止跨库轮询。
-
-```json
-{
-  "siteId": "site01",
-  "target": "LOAD_POWER",
-  "startTime": "2026-09-24T00:00:00Z",
-  "horizonMinutes": 1440,
-  "intervalMinutes": 15,
-  "model": "persistence"
-}
-```
-
-202：`{jobId,status:"PENDING",statusUrl}`。
-`GET /api/v1/forecasts/jobs/{jobId}` 返回 JobStatus、forecastId?/error?。
-`GET /api/v1/forecasts/{forecastId}` 返回 ForecastSeries。
-必须拒绝不能整除的窗口/间隔；预测失败不得返回成功的全零数组。job 超时返回 FAILED 并有 error.code=DEADLINE_EXCEEDED。
-
-## 7. Optimization、Plan 与 Dispatch（M05/M06）
-
-`POST /api/v1/optimization/day-ahead` 转内部同义任务端点，请求：
-
-```json
-{
-  "siteId": "site01",
-  "startTime": "2026-09-24T00:00:00Z",
-  "loadForecastId": "forecast-load-demo",
-  "pvForecastId": "forecast-pv-demo",
-  "tariffId": "tariff-demo-v1",
-  "constraintVersion": "constraints-demo-v1",
-  "initialState": {"soc": 60},
-  "horizonMinutes": 1440,
-  "intervalMinutes": 15
-}
-```
-
-202 返回 jobId；`GET /api/v1/optimization/jobs/{jobId}` 返回 status、objective?、currency?、planId?、solverStatus、error?。成功只表示求解/候选提交完成，不表示计划已激活。
-优化结果经 `POST core:/internal/v1/plans` 提交候选 SchedulePlan，core 验证来源、时间网格、SOC/功率/约束后持久化，产生 CREATED/VALIDATED 事件。
-`POST /api/v1/optimization/intraday` 输入 siteId、snapshotId（由服务读取不可变快照）、最新 forecastIds、activePlanId、constraintVersion、startTime、horizonMinutes=240、intervalMinutes=15；过期/不完整 snapshot 返回 422。
-
-计划接口：
-
-| 路径 | 行为 |
+| 命令 | 含义 |
 |---|---|
-| GET /api/v1/plans/{planId} | 返回指定版本计划和校验结果 |
-| POST /api/v1/plans/{planId}/validate | core 重新验证输入、约束与版本 |
-| POST /api/v1/plans/{planId}/approve | Engineer/被授权角色批准，带 reason/expectedVersion |
-| POST /api/v1/plans/{planId}/activate | 只有 core 在批准、RBAC、模式、时效、约束复查通过后原子激活 |
+| python ems.py doctor | 检查Windows/Python/SQLite，GUI未检查 |
+| python ems.py validate | 严格校验configs/site/demo.json |
+| python ems.py run --ticks 3 | 三次bootstrap心跳后停止；不是三次遥测采样 |
+| python ems.py run | 前台持续运行，Ctrl+C退出 |
+| python ems.py status | 状态记录+Windows实例锁+5s新鲜度判断，陈旧记录不当活跃 |
+| python ems.py demo | 两次启动/停止，验证SQLite启动标记保留 |
 
-激活同一版本幂等；并发版本冲突 409；配置变更使约束不再成立时拒绝或使计划失效。Dispatch 仅将当前区间转换为 Proposal。API 不提供“直接执行整份优化结果到设备”的端点。
-
-## 8. 北向 REST/WS/MQTT
-
-| 资源 | 主要方法 | 所有者/阶段 |
-|---|---|---|
-| /api/v1/sites、/devices、/tags | GET；配置 POST/PATCH | api-server，M02 读/M09 完整写 |
-| /api/v1/telemetry、/snapshots/current | GET，站点/Tag/时间过滤 | Data/core，M02 |
-| /api/v1/alarms、/alarms/{id}/acknowledge | GET / POST | Data，M02 |
-| /api/v1/commands | POST / GET | core，M03 |
-| /api/v1/forecasts、/optimization、/plans | 见前文 | M04～M06 |
-| /api/v1/modes/requests | POST，targetMode/reason | core，M07 |
-| /api/v1/black-start/requests | POST，站点/原因/确认 | core，M08 |
-| /api/v1/reports、/carbon | GET、异步生成 | Data，M09 |
-| /api/v1/users、/roles、/config | 授权管理与版本化配置 | api-server，M09 完整 |
-
-WebSocket `/ws/v1/realtime` 建连时认证，站点与 topic 授权，不能直接指定任意 NATS subject：
-
-```json
-{"action":"subscribe","siteId":"site01","topics":["telemetry","alarm","command","mode"]}
-```
-
-确认消息 `{type:"subscribed",subscriptionId,topics}`；推送 `{type,eventId,siteId,sequence,timestamp,payload}`。按连接序号检测缺口，重连先 REST 取当前快照/告警/命令，再重新订阅；客户端不假设 WS 可靠补齐历史。
-慢客户端有界队列：遥测可合并为最新值，事件缺口须通知 resyncRequired；不能静默丢弃命令终态。M02 实现并测试限流/断线恢复。
-MQTT M09 北向状态 topic `ems/{siteId}/telemetry/{deviceId}`，QoS1，payload 与统一 envelope 一致，消费去重。北向命令 topic 不向 Gateway 桥接；若项目启用指令接收，必须转换为 api-server CommandIntent 并执行同一授权/确认流程。
-
-## 9. 数据一致性与接口验证
-
-- M01 JSON Schema 包含 envelope、telemetry、device event、snapshot；examples 同时供 Go/后续 Python 契约测试。
-- Telemetry 验证类型、单位、Tag/site/device、枚举、时间、非有限数值、null 质量与配置版本。
-- 未识别兼容可选字段可忽略；不支持的主 schemaVersion 必须拒绝并隔离。
-- 历史 DB 事务成功后 ACK；故意制造“提交成功但 ACK 丢失”，验证重投只有一条记录。
-- 接收重复、乱序、重启 epoch、未来时间、断开/恢复、DB/NATS 中断；结果与领域规则一致。
-- REST 契约验证状态码/分页/时间范围；命令验证权限、幂等键冲突、过期、迟到回执；WS 验证重连和事件缺口。
-- 计划、命令状态和必须发送的事件在后续采用事务 outbox/等效机制避免“数据库已提交但事件丢失”；不宣称跨数据库与 NATS 原子事务。
-- 后续服务进入开发前，必须补齐该接口 OpenAPI/JSON Schema、错误集合与负向测试；本次不提前实现后续服务。
+全局参数 --config/--data-dir 放在子命令前。错误输出stderr JSON并返回1；参数错误返回2。数据目录独占锁由Windows在进程退出时释放，不能通过删除锁文件绕过正在运行的实例。

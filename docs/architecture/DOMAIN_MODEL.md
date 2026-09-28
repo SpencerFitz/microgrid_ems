@@ -1,17 +1,17 @@
 # 核心领域模型与不变量
 
-版本：baseline-0.1。五个冻结语义对象为 TelemetrySample、SystemSnapshot、ControlProposal、Command、SchedulePlan。冻结表示不能随意改变含义，不表示本文件已是生成的 JSON Schema；Schema 在对应阶段实现并验证。
+版本：baseline-pywin-0.2。五个冻结语义对象为 TelemetrySample、SystemSnapshot、ControlProposal、Command、SchedulePlan。冻结表示不能随意改变含义，不表示本文件已是生成的 JSON Schema；Schema 在对应阶段实现并验证。
 本文件是字段语义权威，线格式与 API 见 [INTERFACES.md](INTERFACES.md)。原设计的简化结构补齐了质量、关联 ID、去重和时间语义，属于 [架构补充约定](../../ARCHITECTURE.md)。
 
 ## 1. 通用类型与规则
 
-线格式 JSON 使用 lowerCamelCase；Go 内部使用 PascalCase；Python 内部可用 snake_case，但序列化必须一致。
+线格式 JSON 使用 lowerCamelCase；Python 内部使用 snake_case，通过显式序列化映射保持一致。领域对象使用 dataclass/Enum；不可变映射与tuple保证深层不可变。
 `?` 表示可选或可空，具体说明优先；没有 `?` 的字段必填。数字必须有限，禁止 NaN/Infinity。
 
 | 类型 | 规则 |
 |---|---|
 | ID | 非空字符串；持久化对象全局唯一 UUID 或同等唯一标识；示例短 ID 只用于文档 |
-| SiteID / DeviceID | 小写字母、数字、下划线、连字符；不得含点、空白、NATS 通配符；DeviceID 在站内唯一 |
+| SiteID / DeviceID | 小写字母、数字、下划线、连字符；不得含点、空白、事件 topic 通配符；DeviceID 在站内唯一 |
 | TagID | `{siteId}.{deviceId}.{property}`，如 site01.ess01.active_power；property 用 snake_case，无点 |
 | Time | UTC RFC3339，输出 Z，可保留毫秒；持续时间用明确 Ms/Seconds/Minutes 字段 |
 | Value | number / boolean / string / null；由 TagDefinition.dataType 限定 |
@@ -95,7 +95,7 @@ Gateway 发连接状态及质量变更；即使 Gateway 整体停止，Snapshot 
 SnapshotValue：value、unit、sampleTimestamp、receivedAt、effectiveQuality、qualityTimestamp、ageMs、sampleId、source。不把资源视图裸数字当有效值。
 GridState：activePowerKw/reactivePowerKvar/voltageV/frequencyHz/gridPresent/breakerState；Load/PV/EV：activePowerKw（以及需要时 Q/限额）；ESS：activePowerKw/soc/maxChargePowerKw/maxDischargePowerKw/online。每个量为 SnapshotValue 或明确引用对应 Tag；字段未知时 null + 非 GOOD。
 M01 EV 可配置静态 0，必须有明确 SIMULATOR 数据源；不得因为没有 EV 设备而静默补 0。
-Snapshot 发布后不可变；复制 map/slice 或采用不可变结构；后续 Cache 更新不能改变已有 Snapshot。同周期 Controller 必须拿到同一个 id。
+Snapshot 发布后不可变；复制字典并转换为不可变映射/tuple；后续 Cache 更新不能改变已有 Snapshot。同周期 Controller 必须拿到同一个 id。
 
 ## 6. ControlProposal（冻结，M03 实现）
 
@@ -163,10 +163,16 @@ LoadSheddingRequest：requestId、siteId、priorityGroups[]、requestedReduction
 
 ## 11. 配置、存储与迁移边界
 
-- Site/Device/Tag 使用配置版本，M01 YAML 为真源；运行态与配置态分离。
+- Site/Device/Tag 使用配置版本，M01 JSON 为真源；运行态与配置态分离。
 - telemetry_raw 必须保存 sampleId、timestamp、qualityTimestamp、receivedAt、质量、来源、epoch/sequence 和类型化值；数字/文本/布尔列互斥，null 可表示无值。
-- 历史唯一键至少为 `(timestamp,site_id,tag_id,sample_id)`，兼容按 timestamp 分区；同 sampleId 必须具有相同内容，冲突隔离报告，不能静默覆盖。
+- 历史唯一键至少为 `(timestamp,site_id,tag_id,sample_id)`，在SQLite中由复合唯一索引约束，不按时间分区；同 sampleId 必须具有相同内容，冲突隔离报告，不能静默覆盖。
 - 状态变化与命令/计划审计追加保存；计划版本不原地重写历史。
 - 迁移脚本由所属服务管理，集成启动统一运行；迁移失败拒绝 ready，不启动伪健康业务。
 - wire schemaVersion=1 为初始版。兼容新增字段可沿用 v1；变更时间、单位、符号或必填结构必须提升版本并提供兼容方案。
 - M01 只实现当前使用类型和契约测试；其余模型保留规范，禁止为“完整”提前实现控制、预测或模式服务。
+
+## Python/Windows执行补充
+
+本版保留全部字段、控制/命令/计划状态机与不变量；原先面向跨服务的对象也用于本地Python模块边界。SQLite保存UTC文本时间和类型化值，JSON导出语义不变。
+M01只实现当前步骤所用类型；M0.1.1仅配置与启动元数据，领域类型在.2开始。当前站点时区支持Asia/Shanghai或UTC，其他IANA时区在GUI阶段引入并验证tzdata，不使用Windows本地时区悄悄替代。
+历史重放是测试场景中的显式重新注入，不意味着本地EventBus具备持久消息功能；缓存满/进程崩溃的缺口必须显式记录。

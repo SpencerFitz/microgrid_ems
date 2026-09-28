@@ -1,10 +1,10 @@
 # EMS V1.0 产品范围基线
 
-版本：baseline-0.1，2026-09-23。产品范围冻结；验收目标是待验证要求，不是已达到的性能声明。实现授权见 [CURRENT_STAGE.md](../roadmap/CURRENT_STAGE.md)。
+版本：baseline-pywin-0.2，2026-09-24。用户已将实施路线改为全Python/Windows仿真。业务功能目标保留；原商用数值指标作为后续工程化目标，不是本仿真版已达到或必须在M01达到的声明。实现授权见 [CURRENT_STAGE.md](../roadmap/CURRENT_STAGE.md)。
 
 ## 1. 产品定义
 
-面向单个工商业园区的站级光储充 EMS，实现可观、可测、可控、可优化、可追溯、可降级。现场 Linux 服务器运行，提供 Web HMI，与 MGCC/PLC 协同。
+面向单个工商业园区的站级光储充 EMS，实现可观、可测、可控、可优化、可追溯、可降级。Windows本机运行Python程序，后续提供Python桌面HMI；设备、MGCC/PLC均为Python模拟器。当前不接入真实设备。
 
 ```text
 公共电网 → PCC → 园区母线
@@ -16,10 +16,10 @@
 
 单园区不等于单台设备：允许多台 PCS/PV/电表/充电桩，经站级聚合。典型优化性能验收使用一个 ESS/PV/Load/EV 聚合对象。
 
-## 2. 设备与协议
+## 2. 设备与协议能力目标（当前仅模拟）
 
-必须接入：PCC 电表、总表/分表、PV 逆变器、PCS、BMS、EVSE、PLC/MGCC、断路器状态。环境仪表可选；柴油机、风机不纳入。
-核心协议：Modbus TCP、Modbus RTU、OPC UA。北向：REST、WebSocket、MQTT。IEC104 仅预留可配置扩展，不是基础版交付承诺；IEC61850 属于 V1.x/V2.0。
+业务模型必须覆盖的模拟对象：PCC 电表、总表/分表、PV 逆变器、PCS、BMS、EVSE、PLC/MGCC、断路器状态。环境仪表可选；柴油机、风机不纳入。
+原产品协议目标为Modbus TCP/RTU、OPC UA，北向REST/WebSocket/MQTT。当前先使用Python适配器和Facade模拟等价用例；协议收发若后续开发，仅对本机模拟端点验证，不要求外部服务，不能将Facade测试算作协议兼容验收。IEC104 仅预留可配置扩展，不是基础版交付承诺；IEC61850 属于 V1.x/V2.0。
 
 驱动统一成 Device、TagDefinition、TelemetrySample、DeviceCapability。协议地址、倍率、字节序、厂家差异只能位于驱动或模板，不进入控制策略。
 
@@ -103,7 +103,7 @@ Administrator、Engineer、Operator、Viewer 四角色。Viewer 只读；Operato
 不实现：继电保护（过流、差动、低频、低压、孤岛检测）、逆变器内环（PWM、电流/电压环、PLL、VSG、LVRT/HVRT）、<100 ms 关键闭环、省地调 EMS/DMS、大电网状态估计/N-1/ACOPF、多站/VPP/电力市场/辅助服务市场、柴油机/风机、充电运营、强化学习实时控制或大模型自主调度。
 不承诺 V1.0 双机热备或 99.9% 以上可用性；后续 HA 单独立项。
 
-## 5. 可测量验收指标
+## 5. 原商用可测量指标（后续工程化参考，不是本轮仿真发布门禁）
 
 下表沿用原对话目标；项目相关的边界必须在 FAT/SAT 方案中填实，未填实不能宣称通过。补充统计口径不等于改变冻结目标。
 
@@ -128,7 +128,7 @@ Administrator、Engineer、Operator、Viewer 四角色。Viewer 只读；Operato
 | A17 | ≥7×24 h 连续稳定运行 | 记录 CPU/内存/线程/数据库/日志/网络重连；推荐发布前 30 天，二者不得混淆 |
 | A18 | 最低测试体系 | Unit、Integration、Simulator、Fault Injection、SIL、FAT、SAT；核心控制自动化 |
 
-## 6. 项目化验收参数与证据
+## 6. 后续真实工程化所需参数与证据
 
 上线前工程师填写：站点拓扑及 Load/EV 计量边界、硬件/网络、设备/Tag 清单、额定功率、采样和超时、SOC 边界、BMS/PCS 能力、控制权、PCC 稳态窗口/死区、防逆流幅值/持续时间/平均窗口、降级设定、日志/留存容量、MGCC 确认与超时、计价和碳因子。
 M01 不要求填写真实现场参数，使用固定模拟值；未填写现场参数不影响 M01 学习开发，但阻止相关现场验收。
@@ -138,7 +138,12 @@ SAT 证据：现场点表/极性/单位、时钟与通信、命令回执与实�
 
 ## 7. 版本与变更控制
 
-V0.1 Kernel → V0.2 SCADA → V0.3 Control/PCC → V0.4 Forecast → V0.5 Day-Ahead → V0.6 Intraday → V0.7 Microgrid → V0.8 Black Start → V0.9 Engineering → V1.0 商业发布。
+V0.1 Kernel → V0.2 SCADA → V0.3 Control/PCC → V0.4 Forecast → V0.5 Day-Ahead → V0.6 Intraday → V0.7 Microgrid → V0.8 Black Start → V0.9 Engineering → V1.0-SIM 仿真能力验收；商业发布另行工程化。
 详细对应关系和逐阶段门禁见 [ROADMAP.md](../roadmap/ROADMAP.md)。
 V1.x 可扩展 IEC104、IEC61850、高级无功、HA、更多设备；柴油机/柔性负荷等另行立项。V2.0 再考虑 Cloud/Multi-Site/VPP/市场。
 变更必须说明动机、影响的需求编号、契约/数据迁移、测试与阶段调整。本文范围不能被随手修改配置或新增依赖暗中扩大。
+
+## 8. 当前Python/Windows仿真验收口径
+
+所有阶段默认使用Python模拟对象，F01～F20为业务用例覆盖目标；涉及实物、真实协议、生产安全、现场部署的条目只记录未覆盖，不伪称已通过。M02桌面监视替代Web HMI，M01本地EventBus/SQLite替代服务器基础设施；商业目标不构成恢复旧部署技术的授权。
+G10只发布V1.0-SIM：配置化模拟设备、仿真控制、预测优化、模式/黑启动过程、报告与异常恢复均有可复现实验证据。真实物理设备数量、现场SAT、月可用率、1年留存及商用安全验证不能通过加速仿真推定。

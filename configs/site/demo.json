@@ -1,0 +1,10 @@
+{
+  "siteId": "site01",
+  "timezone": "Asia/Shanghai",
+  "configVersion": "python-windows-v1",
+  "samplingIntervalMs": 1000,
+  "pollTimeoutMs": 800,
+  "staleAfterMs": 3000,
+  "offlineAfterMs": 5000,
+  "logLevel": "INFO"
+}

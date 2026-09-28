@@ -1,0 +1,15 @@
+{
+  "result": "PASS",
+  "stage": "M0.1.1",
+  "components": [
+    "simulator",
+    "device_gateway",
+    "ems_core",
+    "data_service"
+  ],
+  "firstTicks": 3,
+  "secondTicks": 3,
+  "retainedInstallationId": "c91bf63b-b3bb-4a78-898c-643e1b8b6533",
+  "finishedAt": "2026-09-28T00:52:09.564Z",
+  "scope": "configuration/lifecycle/logs/SQLite metadata; not telemetry"
+}

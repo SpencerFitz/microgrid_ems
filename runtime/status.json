@@ -1,0 +1,14 @@
+{
+  "stage": "M0.1.1",
+  "state": "STOPPED",
+  "pid": 22540,
+  "updatedAt": "2026-09-28T00:52:09.563Z",
+  "ticks": 3,
+  "components": {
+    "simulator": "STOPPED",
+    "device_gateway": "STOPPED",
+    "ems_core": "STOPPED",
+    "data_service": "STOPPED"
+  },
+  "meaning": "bootstrap health only; no telemetry or control"
+}
