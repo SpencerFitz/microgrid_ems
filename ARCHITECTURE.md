@@ -34,7 +34,7 @@ Snapshot → Controllers / Dispatch → Proposal → Arbiter → Interlock
 
 | 模块 | 责任 | 所有权/首次实现 |
 |---|---|---|
-| simulator | PV/ESS/Load/PCC/EV与故障；后续MGCC状态过程 | M0.1.3；本步仅注册健康名 |
+| simulator | PV/ESS/Load/PCC/EV与故障；后续MGCC状态过程 | M0.1.3已实现独立模拟器，尚未接入bootstrap轮询 |
 | device_gateway | 轮询仿真适配器、标准化、质量、后续模拟命令 | M0.1.4 |
 | ems_core | Scheduler、Snapshot、后续控制安全链/计划/模式 | M0.1.6起；控制M03 |
 | data_service | Historian、后续Alarm/Audit/Report/Carbon | M0.1.7起 |
@@ -95,3 +95,9 @@ Windows是开发和仿真验收环境；真实Modbus设备、物理规模、现�
 ## M0.1.2 实施补充（2026-09-28）
 
 `ems/domain/` 定义不可变领域对象及边界校验；`contracts/` 保存静态契约与样例。该层无网络、数据库或后台任务。`demo-contracts` 只读取样例并验证 JSON 往返；仿真采样链从 M0.1.3 开始。阶段状态以 CURRENT_STAGE.md 为准。
+
+## M0.1.3 实施补充
+
+已实现 `ems/simulator/`：JSON场景与Clock→理想物理状态→设备适配器→RawMeasurement。五个聚合设备共六个点；时间可手动推进，seed可复现PV变化。断线/超时/坏数据仅影响读接口，物理状态持续演化。
+
+CLI `demo-simulator` 验证教学场景，`simulate`执行自选场景。M0.1.1的run/demo仍只运行bootstrap；尚无Gateway轮询/重连、EventBus、Snapshot构建器或历史遥测持久化。接口与限制见 `ems/simulator/README.md`。

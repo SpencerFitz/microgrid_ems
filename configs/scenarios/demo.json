@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "siteId": "site01",
+  "configVersion": "python-windows-v1",
+  "startTime": "2026-09-28T00:00:00Z",
+  "seed": 42,
+  "capacityKwh": 1000,
+  "initialSoc": 60,
+  "maxChargeKw": 500,
+  "maxDischargeKw": 500,
+  "pvRatedKw": 1000,
+  "initialScenario": {
+    "loadKw": 500,
+    "pvKw": 0,
+    "essKw": 0,
+    "evKw": 0,
+    "pvVariationKw": 0
+  }
+}

@@ -117,3 +117,13 @@ REST/WebSocket/MQTT是原产品北向能力目标，仿真版先以Facade与Pyth
 | python ems.py demo-contracts | M0.1.2：静态 JSON 校验、往返与 GOOD/OFFLINE 对比，无采集 |
 
 全局参数 --config/--data-dir 放在子命令前。错误输出stderr JSON并返回1；参数错误返回2。数据目录独占锁由Windows在进程退出时释放，不能通过删除锁文件绕过正在运行的实例。
+
+## 7. M0.1.3 Simulator 的已实现接口
+
+`Simulator(config, clock)`；`set_scenario(Scenario)`、`set_connection(device_id, bool)`、`set_fault(device_id, ReadFault)`为实验注入；`read(device_id)`返回不可变原始读数tuple。`SimulatedDriver(plant, device_id)`提供connect/read/close，下一步Gateway直接使用。
+
+原始点结构：siteId/deviceId/property/value/unit/timestamp/quality/source/configVersion。Gateway后续负责Tag映射、sampleId、receivedAt、qualityTimestamp、producerEpoch和sequence及Telemetry封装。断线抛DeviceUnavailable，超时注入立即抛SimulatedTimeout，坏数据为BAD/null；不将失败伪造为GOOD0。
+
+`python ems.py demo-simulator`为固定自动验证；`python ems.py simulate --scenario configs/scenarios/discharge.json --seconds 3600`单次推进虚拟时间并输出状态与六个读数。simulate的--scenario/--seconds放在子命令后；全局--config是bootstrap配置，不能替代场景参数。新命令不写runtime。
+
+800ms真实阻塞取消/隔离、1000ms轮询、STALE/OFFLINE和重连等在M0.1.4验证；本步即时故障异常不能冒充这些功能。

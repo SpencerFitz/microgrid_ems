@@ -1,65 +1,76 @@
 # microgrid_ems — Python / Windows 仿真版
 
-所有项目程序使用Python，Windows本机模拟运行。当前为 **M0.1.2 / READY_FOR_REVIEW**。M0.1.1 已由用户确认本机验证成功；本步增加领域对象、数据契约和静态 SOC 样例，等待本步验收。
-技术路线取代之前版本，详见 [架构](ARCHITECTURE.md)、[迁移说明](MIGRATION.md)、[当前阶段](docs/roadmap/CURRENT_STAGE.md)。
+当前 **M0.1.3 / READY_FOR_REVIEW**，软件版本0.1.3.dev1。M0.1.1和M0.1.2已获用户确认；本步加入可重复运行的设备模拟器，等待本机验收。
 
-## 直接运行
+## 本机运行
 
-需要Windows的Python3.12+，M01只用标准库，无pip依赖，无外部服务。
-将压缩包内microgrid_ems目录解压，在该目录打开终端，运行：
+Windows 10/11、Python 3.12+，仅标准库，无需安装外部服务或第三方包。解压后在microgrid_ems目录运行：
 
-```text
+```powershell
 python ems.py doctor
-python ems.py validate
 python -m unittest discover -s tests -v
-python ems.py demo
-python ems.py demo-contracts
-python ems.py status
+python ems.py demo-simulator
 ```
 
-若系统提供Python启动器，可把python换成 `py -3.12`。若未配置PATH，用实际python.exe绝对路径运行；PowerShell写法为 `& '你的python.exe路径' ems.py demo`。本次测试使用本机已存在的Python3.12.14，不需要下载安装。
-doctor预期READY_M01；validate为VALID；测试预期全部OK；Demo结果PASS；Demo结束后的status为STOPPED。这里的READY只表示启动环境，不代表后续业务已完成。
+预期READY_M01、43项测试OK、Demo结果PASS。虚拟时间会直接推进，不需要等实际一小时。使用Python启动器时，可将python替换成 `py -3.12`。
 
-持续运行及查看状态：
+自选放电场景：
+
+```powershell
+python ems.py simulate --scenario configs/scenarios/discharge.json --seconds 3600
+```
+
+应得到SOC从60%到50%、PCC为50kW。详细实验、预期数值、更新仓库及验收见 [M0.1.3学习指南](docs/learning/M0.1.3_LEARNING.md)，实际验证见 [验证记录](docs/learning/M0.1.3_VALIDATION.md)。请先本机验证，再同步GitHub。
+
+## 当前做到了哪里
+
+| 阶段 | 已实现 |
+|---|---|
+| M0.1.1（已验收） | 配置/日志/Windows实例锁/启动停止/状态/SQLite启动元数据 |
+| M0.1.2（已验收） | 不可变领域对象、JSON契约/样例、字段/点表关联校验 |
+| M0.1.3（待验收） | 理想PV/Load/ESS/PCC/EV、能量与SOC、虚拟时钟/seed、原始读取/通信故障 |
+
+本步数据流：场景JSON + 时间 → 物理模型 → RawMeasurement → CLI。当前每类资源一个聚合设备，效率1；尚无自动轮询、消息总线、快照构建器、历史遥测、GUI或控制策略。
+
+PCC=Load+EV−PV−ESS。ESS正值放电、负值充电；PCC正值购电、负值送电；Load不含EV。满/空电时模型实际功率饱和到0；通信断开只阻断读接口，不停止物理演化。
+
+## 命令说明
+
+| 命令 | 用途 |
+|---|---|
+| python ems.py doctor | 检查Windows/Python/SQLite；不验证GUI |
+| python ems.py validate | 校验configs/site/demo.json启动配置 |
+| python ems.py demo | 两轮bootstrap启动/停止，验证启动元数据保留 |
+| python ems.py run --ticks 3 | 三次bootstrap心跳后停止，不是遥测采样 |
+| python ems.py run | 持续bootstrap心跳，Ctrl+C停止 |
+| python ems.py status | 最后状态结合实例锁与5s新鲜度判断 |
+| python ems.py demo-contracts | M0.1.2静态GOOD/OFFLINE样例校验 |
+| python ems.py demo-simulator | M0.1.3功率/SOC/断线恢复自动验证 |
+| python ems.py simulate --scenario 路径 --seconds 秒数 | 从场景初始状态推进虚拟时间，返回瞬时状态/读数 |
+
+全局--config/--data-dir放在子命令前；simulate的--scenario/--seconds放在simulate后。bootstrap配置与模拟场景不同。新模拟命令不写runtime；旧run/demo仍只演示生命周期，尚未接入模拟器轮询。
+
+成功退出0，参数/运行错误非零。SQLite当前仅bootstrap_meta，不是Historian。状态文件不可单独当健康依据。运行数据、日志、Python缓存不入Git；已跟踪产物需单独取消跟踪，.gitignore不会自动清除。
+
+## 目录导航
 
 ```text
-python ems.py run
+microgrid_ems/
+├── AGENTS.md / ARCHITECTURE.md / README.md / MIGRATION.md
+├── ems.py / pyproject.toml
+├── ems/
+│   ├── cli.py / config.py / runtime.py
+│   ├── domain/            # M0.1.2 契约
+│   └── simulator/         # M0.1.3 模型、时钟、配置、适配器、Demo
+├── configs/
+│   ├── site/demo.json     # bootstrap配置
+│   └── scenarios/         # 初始/放电场景
+├── contracts/             # 领域JSON Schema与静态样例
+├── tests/                 # 基础、契约、Schema样例、模拟器测试
+└── docs/
+    ├── product/ / architecture/
+    ├── roadmap/ / milestones/
+    └── learning/          # 各步学习指南与验证证据
 ```
 
-另一个终端执行status查看活跃状态；原终端按Ctrl+C停止。也可 `python ems.py run --ticks 3` 运行三次心跳自动结束。相同数据目录只能有一个实例，第二个返回非零错误。
-全局参数必须在子命令前：`python ems.py --data-dir runtime-demo demo`；使用独立目录进行不同实验，停止不会删除数据。
-
-## M0.1.2 新增内容
-
-`ems/domain/` 提供站点、设备、点表、遥测、消息封装和不可变快照类型；`contracts/` 提供 JSON Schema 和示例。`demo-contracts` 演示 SOC=60 的 GOOD 样本与保留相同测量时间的 OFFLINE 事件，结果应 PASS。本步不自动采样，不启动 Simulator。
-
-详见 [契约用法](contracts/README.md)、[学习与升级操作](docs/learning/M0.1.2_LEARNING.md)、[验证记录](docs/learning/M0.1.2_VALIDATION.md)。先在本机测试、理解并验收，再同步 GitHub。
-
-## 已完成的 M0.1.1 基础
-
-配置文件→严格校验→注册simulator/device_gateway/ems_core/data_service四个逻辑组件→心跳/结构化日志→停止→重启验证启动元数据保留。
-这四个名称目前只是bootstrap中的组件清单，未实现物理Simulator、数据采集、消息总线或历史遥测。对应业务将在M0.1.3～9逐步加入。
-
-| 文件 | 用途 |
-|---|---|
-| ems.py | 唯一启动入口 |
-| ems/config.py | JSON配置与类型/范围/时区/重复键校验 |
-| ems/runtime.py | Windows实例锁、日志、心跳、SQLite启动元数据、Demo |
-| ems/cli.py | 命令与退出码 |
-| configs/site/demo.json | 当前实验配置 |
-| tests/test_scaffold.py | 正常/异常/并发/崩溃恢复测试 |
-| runtime/ | 自动生成的数据文件，不入库 |
-
-SQLite当前只有bootstrap_meta表；state.sqlite3不是已实现的Historian。元数据标记在Demo的两次运行间应保持一致。
-status.json是最后心跳记录，程序同时检查Windows锁和5s新鲜度；进程被终止而状态文件残留RUNNING时，status会显示UNAVAILABLE并退出1，不能把旧记录当活跃。
-普通成功退出0；运行/配置错误退出1；CLI参数错误退出2。日志为UTF-8 JSON/UTC，大小轮转；不打印整个配置或环境。
-
-## 环境限制与后续设计
-
-M01无需界面；本机捆绑Python缺完整Tcl初始化资源，尚未验证GUI。M02准备完整Windows Python/Tkinter环境后再开发界面，不阻塞当前CLI。
-当前timezone只支持Asia/Shanghai或UTC，日志始终UTC；更广泛IANA支持待GUI阶段准备tzdata后验证。
-未来EventBus为本地内存广播，不承诺跨重启重放；SQLite单写者、有限缓存，故障缺口明确。Windows模拟通过不代表硬实时/实物/商业可用性验收。
-
-## 验证与阶段推进
-
-实际记录见 [M0.1.1验证](docs/learning/M0.1.1_VALIDATION.md)。本次11项测试及两轮启动Demo通过，但未自动标ACCEPTED，也未进入M0.1.2。GitHub未写入；本包可用于更新本地仓库。
+规则见 [AGENTS.md](AGENTS.md)，模型接口见 [Simulator说明](ems/simulator/README.md)，当前门禁见 [CURRENT_STAGE.md](docs/roadmap/CURRENT_STAGE.md)。本轮不自动更新GitHub，也不提前进入M0.1.4 Gateway。

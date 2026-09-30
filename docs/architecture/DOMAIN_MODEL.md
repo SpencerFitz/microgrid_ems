@@ -184,3 +184,9 @@ M01只实现当前步骤所用类型；M0.1.1仅配置与启动元数据，领�
 资源视图选用明确的 TagID 引用映射，限定属性及单位，tags 为权威带质量数据。无数据时映射可为空，不自动填零。快照当前只检查形状、引用、截点和禁控等不变量；必需点清单/质量老化/时间选择/聚合计算在 M0.1.6 实现。ageMs 暂只接受非负整数，未来时钟偏差由构建器显式处理。
 
 Python 对象构造、from_dict、from_json 均校验；遥测还需 validate_against(tag) 检查点表关联。JSON Schema 表达结构规则，跨字段与点表规则由 Python 补充。可选字段省略后序列化可补 null；以语义一致为往返标准。详细限制及标准符合性验证范围见契约说明。
+
+## M0.1.3 原始读数与模型状态
+
+`ems.simulator.RawMeasurement` 是边界输入类型，字段与接口文档第7节一致；它不是 TelemetrySample，尚无Gateway接收/质量判断时间、事件ID或序列。原始读数有源时间、单位、质量，BAD可为null；通信失败直接抛异常。
+
+`PlantState` 仅用于模拟器测试观测，含UTC时间、elapsedSeconds、各资源瞬时功率、requestedEssKw/essKw、energyKwh、soc。它不替代SystemSnapshot。Scenario/SimulatorConfig和RawMeasurement均不可变且执行字段校验，模型状态演化由Simulator持有。

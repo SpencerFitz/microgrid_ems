@@ -20,6 +20,10 @@ def main(argv=None):
     commands.add_parser("validate", help="validate configuration without starting")
     commands.add_parser("demo", help="run two short lifecycle sessions and verify retention")
     commands.add_parser("demo-contracts", help="validate static domain fixtures and explain OFFLINE quality")
+    commands.add_parser("demo-simulator", help="verify power balance, SOC and communication recovery using virtual time")
+    sim_parser = commands.add_parser("simulate", help="evaluate one scenario with virtual time; no polling")
+    sim_parser.add_argument("--scenario", type=Path, default=ROOT / "configs/scenarios/demo.json")
+    sim_parser.add_argument("--seconds", type=float, default=0, help="virtual elapsed seconds, default 0")
     commands.add_parser("status", help="inspect recorded heartbeat and live instance lock")
     run_parser = commands.add_parser("run", help="foreground runtime; Ctrl+C to stop")
     run_parser.add_argument("--ticks", type=int, default=0, help="0 runs until Ctrl+C")
@@ -32,6 +36,12 @@ def main(argv=None):
             result = {"status": "READY_M01", "python": platform.python_version(),
                       "platform": platform.platform(), "sqlite": sqlite3.sqlite_version,
                       "externalServicesRequired": False, "guiChecked": False}
+        elif args.command == "demo-simulator":
+            from .simulator.demo import demo_simulator
+            result = demo_simulator(ROOT)
+        elif args.command == "simulate":
+            from .simulator.demo import simulate_scenario
+            result = simulate_scenario(args.scenario, args.seconds)
         elif args.command == "demo-contracts":
             from .domain.demo import demo_contracts
             result = demo_contracts(ROOT)

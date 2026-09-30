@@ -1,6 +1,6 @@
 # M01_KERNEL：Python / Windows 仿真内核
 
-版本 baseline-pywin-0.2，2026-09-24。M0.1.1～M0.1.9每步单独实施、测试、Demo及人工验收。更新于2026-09-28：M0.1.1已获用户确认，当前实施M0.1.2；.3～.9命令仍为规划。
+版本 baseline-pywin-0.2，2026-09-24。M0.1.1～M0.1.9每步单独实施、测试、Demo及人工验收。更新于2026-09-28：M0.1.1与M0.1.2已获用户确认，当前实施M0.1.3；.4～.9命令仍为规划。
 
 ## 总目标、学习目标、范围与非目标
 
@@ -33,7 +33,7 @@ ESS正放电负充电；教学容量1000kWh、效率1，仅作为理想模拟。
 ## 命令和门禁
 
 当前可运行：`python ems.py doctor`、`validate`、`run --ticks 3`、`run`、`status`、`demo`；测试：`python -m unittest discover -s tests -v`。CLI全局--config/--data-dir位于子命令前。
-M0.1.2新增 `python ems.py demo-contracts`、tests/test_contracts.py、tests/test_schema_examples.py。以下.3～.9的test/demo命令或测试文件由对应步骤创建，不能提前运行或当作已通过。每步记录准确命令、退出码和实际结果；READY_FOR_REVIEW不等于ACCEPTED。
+M0.1.2新增 `python ems.py demo-contracts`、tests/test_contracts.py、tests/test_schema_examples.py。M0.1.3新增 `demo-simulator`、`simulate --scenario 路径 --seconds 秒数` 与 tests/test_simulator.py。以下.4～.9的test/demo命令或测试文件由对应步骤创建，不能提前运行或当作已通过。每步记录准确命令、退出码和实际结果；READY_FOR_REVIEW不等于ACCEPTED。
 测试使用tempfile隔离目录，不读取/删除用户其他数据。持久数据放runtime/，停止不删除；新实例不能同时写同一数据目录。错误返回非零。
 
 ## M0.1.1 — 仓库脚手架
@@ -74,7 +74,7 @@ M0.1.2新增 `python ems.py demo-contracts`、tests/test_contracts.py、tests/te
 
 **验收：** JSON/对象/规范一致，错误定位明确，测试不依赖外部服务。
 
-**完成条件：** 领域与契约测试通过、样例Demo完成、用户确认后进入.3。
+**完成条件：** 领域与契约测试及Demo通过；用户反馈“本机验证通过了，github也更新了，现在继续开发”，据此记 ACCEPTED。
 
 ## M0.1.3 — Simulator
 
@@ -88,13 +88,13 @@ M0.1.2新增 `python ems.py demo-contracts`、tests/test_contracts.py、tests/te
 
 **组件：** ems/simulator/、configs/scenarios/、tests/test_simulator.py。
 
-**测试：** PCC200→150及ESS正负功率例；100kW放电1h使1000kWh的SOC60→50；充电回60；相同时间输入可重复，越界场景拒绝。
+**测试：** PCC200→150及ESS正负功率/EV/送电例；100kW放电1h使1000kWh的SOC60→50，充电回60；满/空饱和、改变场景前结算、重复/分段读取一致、seed复现、故障隔离/恢复、非法配置/时钟拒绝。详见 tests/test_simulator.py。
 
 **Demo：** 新增 `python ems.py demo-simulator`，改变PV查询PCC，用虚拟时间展示SOC。
 
 **验收：** 时间/质量/单位完整，断开读接口不改变真实模拟功率，恢复可重复。
 
-**完成条件：** 模型测试/Demo通过、学习日志解释功率与能量、用户验收。
+**完成条件：** 模型测试/Demo通过、学习说明解释功率与能量。当前 READY_FOR_REVIEW，用户依 M0.1.3_LEARNING.md 验收后进入.4。
 
 ## M0.1.4 — Device Gateway
 
